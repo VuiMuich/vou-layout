@@ -30,6 +30,11 @@
             mkdir -p $out/share/X11/xkb/symbols
             cp ${./xkb-custom/symbols/vou-for-x1gen2} $out/share/X11/xkb/symbols/vou
           '';
+
+          vou-console = pkgs.runCommand "vou-console-keymap" { } ''
+            mkdir -p $out/share/keymaps
+            cp ${./console/vou.map} $out/share/keymaps/vou.map
+          '';
         }
       );
 
@@ -37,6 +42,7 @@
         {
           config,
           lib,
+          pkgs,
           ...
         }:
         {
@@ -54,22 +60,31 @@
                 those in the place of the `capslock` key.
               '';
             };
-          };
-
-          config = lib.mkIf config.xkbCustomLayouts.enable {
-            services.xserver.xkb.extraLayouts.vou = {
-              description = "VOU layout";
-              languages = [
-                "eng"
-                "de"
-              ];
-              symbolsFile =
-                if config.xkbCustomLayouts.variant == "vou-x1gen2" then
-                  "${self}/xkb-custom/symbols/vou-for-x1gen2"
-                else
-                  "${self}/xkb-custom/symbols/vou";
+            enableConsole = lib.mkEnableOption "VOU console keymap for TTY" // {
+              default = false;
             };
           };
+
+          config = lib.mkMerge [
+            (lib.mkIf config.xkbCustomLayouts.enable {
+              services.xserver.xkb.extraLayouts.vou = {
+                description = "VOU layout";
+                languages = [
+                  "eng"
+                  "de"
+                ];
+                symbolsFile =
+                  if config.xkbCustomLayouts.variant == "vou-x1gen2" then
+                    "${self}/xkb-custom/symbols/vou-for-x1gen2"
+                  else
+                    "${self}/xkb-custom/symbols/vou";
+              };
+            })
+
+            (lib.mkIf config.xkbCustomLayouts.enableConsole {
+              console.keyMap = "${self.packages.${pkgs.system}.vou-console}/share/keymaps/vou.map";
+            })
+          ];
         };
     };
 }
