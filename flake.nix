@@ -82,7 +82,9 @@
             })
 
             (lib.mkIf config.xkbCustomLayouts.enableConsole {
-              console.keyMap = "${self.packages.${pkgs.system}.vou-console}/share/keymaps/vou.map";
+              console.keyMap = "${
+                self.packages.${pkgs.stdenv.hostPlatform.system}.vou-console
+              }/share/keymaps/vou.map";
             })
           ];
         };
